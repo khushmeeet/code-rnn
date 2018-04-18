@@ -7,6 +7,7 @@ from mLSTM import Stacked_mLSTM, mLSTM
 from settings import model_settings
 import utils
 import time
+import os
 
 
 options = arg_parser.parser.parse_args()
@@ -39,6 +40,12 @@ model_optimizer = optim.SGD(model.parameters(), lr=lr)
 n_params = sum([p.nelement() for p in model.parameters()])
 print('Total number of parameters:', n_params)
 print('Total number of batches:', num_batches)
+print()
+print('Embedding Summary:')
+print(embedding)
+print()
+print('RNN Summary:')
+print(model)
 
 
 def train_model(epoch):
@@ -78,7 +85,7 @@ def train_model(epoch):
             print(f'epoch {epoch} | batch {s}/{num_batches} | loss {loss.data[0] / seq_length} | avg loss {loss_avg} | time {time.time() - start}')
 
 
-if __name__ == 'main':
+if __name__ == '__main__':
     for e in options.epochs:
         try:
             train_model(e)
@@ -92,6 +99,14 @@ if __name__ == 'main':
                 'embedding': embedding,
                 'epoch': e
             }
-            save_file = f'{options.save_model}_{e}.pt'
+            if options.paperspace:
+                save_file = f'/artifacts/{options.save_model}_epoch{e}.pt'
+            else:
+                if os.path.exists('./saved_models/'):
+                    save_file = f'./saved_models/{options.save_model}_epoch{e}.pt'
+                else:
+                    os.mkdir('./saved_models/')
+                    save_file = f'./saved_models/{options.save_model}_epoch{e}.pt'
             torch.save(checkpoint, save_file)
+            break
     

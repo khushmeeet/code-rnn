@@ -2,3 +2,6 @@ dataset/python/python_code.txt
 dataset/python/python_code_processed.txt
 dataset/haskell/ghc
 dataset/haskell/haskell_code.txt
+.ps_project
+__pycache__
+dataset/haskell/.floyddata

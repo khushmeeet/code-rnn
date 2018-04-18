@@ -7,4 +7,5 @@ parser.add_argument('-save_model', default='model_output', help='Model filename 
 parser.add_argument('-load_model', default='', help='Model filename for loading')
 parser.add_argument('-train_data', default='', help='Dataset filename for training model')
 parser.add_argument('-test', action='store_true', help='Testing the model')
+parser.add_argument('-paperspace', action='store_true', help='Set to true to run model in paperspace')
 parser.add_argument('-cuda', action='store_true', help="Use CUDA")
