@@ -1,4 +1,5 @@
 import os
+from torch.autograd import Variable
 import torch
 import math
 

@@ -75,8 +75,8 @@ def train_model(epoch):
 
         hidden_init = utils.copy_state(hidden)
         gn = utils.calc_grad_norm(model)
-        utils.clip_gradient(model, model_settings['clip'])
-        utils.clip_gradient(embedding, model_settings['clip'])
+        utils.clip_gradient(model, model_settings['clip_gradient'])
+        utils.clip_gradient(embedding, model_settings['clip_gradient'])
         embed_optimizer.step()
         model_optimizer.step()
         loss_avg = .99*loss_avg + .01*loss.data[0]/seq_length
