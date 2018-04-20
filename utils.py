@@ -2,6 +2,7 @@ import os
 from torch.autograd import Variable
 import torch
 import math
+import numpy as np
 
 
 def tokenize(path):
@@ -23,11 +24,24 @@ def tokenize(path):
     return file_bytes
 
 
-def batchify(data, bsz):
-    nbatch = data.size(0) // bsz
-    data = data.narrow(0, 0, nbatch * bsz)
-    data = data.view(bsz, -1).t().contiguous()
+def batchify(data, batch_size):
+    nbatch = data.size(0) // batch_size
+    data = data.narrow(0, 0, nbatch * batch_size)
+    data = data.view(batch_size, -1).t().contiguous()
     return data
+
+
+def make_test_tensor(data, batch_size):
+    tokens = len(data.encode())
+    ids = torch.ByteTensor(tokens)
+    token = 0
+    for char in data.encode():
+        ids[token] = char
+        token += 1
+    nbatch = ids.size(0) // batch_size
+    ids = ids.narrow(0, 0, nbatch * batch_size)
+    ids = ids.view(batch_size, -1).t().contiguous()
+    return ids
 
 
 def update_lr(optimizer, lr):
@@ -71,3 +85,11 @@ def copy_state(state):
     	return (Variable(state[0].data), Variable(state[1].data))
     else:
     	return Variable(state.data)
+
+
+# def pick_top_n(preds, vocab_size, top_n=5):
+#     p = np.squeeze(preds)
+#     p[np.argsort(p)[:-top_n]] = 0
+#     p = p / np.sum(p)
+#     c = np.random.choice(vocab_size, 1, p=p)[0]
+#     return c

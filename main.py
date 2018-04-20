@@ -85,28 +85,70 @@ def train_model(epoch):
             print(f'epoch {epoch} | batch {s}/{num_batches} | loss {loss.data[0] / seq_length} | avg loss {loss_avg} | time {time.time() - start}')
 
 
-if __name__ == '__main__':
-    for e in options.epochs:
-        try:
-            train_model(e)
-            lr *= 0.7
-            utils.update_lr(model_optimizer, lr)
-            utils.update_lr(embed_optimizer, lr)
-        except KeyboardInterrupt:
-            print('KeyboardInterrupt occured, saving the model')
-            checkpoint = {
-                'model': model,
-                'embedding': embedding,
-                'epoch': e
-            }
-            if options.paperspace:
-                save_file = f'/artifacts/{options.save_model}_epoch{e}.pt'
-            else:
-                if os.path.exists('./saved_models/'):
-                    save_file = f'./saved_models/{options.save_model}_epoch{e}.pt'
-                else:
-                    os.mkdir('./saved_models/')
-                    save_file = f'./saved_models/{options.save_model}_epoch{e}.pt'
-            torch.save(checkpoint, save_file)
-            break
+def generation(embedding, model, state, n, primer):
+    sample = [c for c in primer]
+    for c in primer:
+        x = torch.ByteTensor(c)
+        emb = embedding(x)
+        hidden, output = model(emb, state)
     
+    _, indices = output.data.topk(1)
+    out_char = indices[0][0]
+    sample.append(out_char)
+    hidden = hidden
+    next_input = Variable(indices[0], volatile=True)
+    if options.cuda:
+        next_input.cuda()
+
+
+    for _ in range(n):
+        emb = embedding(next_input)
+        hidden, output = model(emb, hidden)
+        values, indices = output.data.topk(1)
+        out_char = indices[0][0]
+        sample.append(out_char)
+        next_input = Variable(indices[0])
+        if options.cuda:
+            next_input.cuda()
+    
+    return ''.join(sample)
+
+
+if __name__ == '__main__':
+    if options.test:
+        checkpoint = torch.load(options.load_model)
+        embedding = checkpoint['embedding']
+        model = checkpoint['model']
+
+        state = model.state0(batch_size)
+        if options.cuda:
+            state = utils.make_cuda(state)
+            embedding.cuda()
+            model.cuda()
+
+        gen_text = generation(embedding, model, state, options.n, options.primer)
+        print(gen_text)
+    else:
+        for e in options.epochs:
+            try:
+                train_model(e)
+                lr *= 0.7
+                utils.update_lr(model_optimizer, lr)
+                utils.update_lr(embed_optimizer, lr)
+            except KeyboardInterrupt:
+                print('KeyboardInterrupt occured, saving the model')
+                checkpoint = {
+                    'model': model,
+                    'embedding': embedding,
+                    'epoch': e
+                }
+                if options.paperspace:
+                    save_file = f'/artifacts/{options.save_model}_epoch{e}.pt'
+                else:
+                    if os.path.exists('./saved_models/'):
+                        save_file = f'./saved_models/{options.save_model}_epoch{e}.pt'
+                    else:
+                        os.mkdir('./saved_models/')
+                        save_file = f'./saved_models/{options.save_model}_epoch{e}.pt'
+                torch.save(checkpoint, save_file)
+                break

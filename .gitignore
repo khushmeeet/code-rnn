@@ -3,5 +3,5 @@ dataset/python/python_code_processed.txt
 dataset/haskell/ghc
 dataset/haskell/haskell_code.txt
 .ps_project
+.DS_Store
 __pycache__
-dataset/haskell/.floyddata
