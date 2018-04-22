@@ -2,6 +2,7 @@ import torch
 from torch import optim
 from torch.autograd import Variable
 import torch.nn as nn
+import visdom
 import arg_parser
 from mLSTM import Stacked_mLSTM, mLSTM
 from settings import model_settings
@@ -11,6 +12,9 @@ import os
 
 
 options = arg_parser.parser.parse_args()
+vis = visdom.Visdom()
+assert vis.check_connection()
+
 
 lr = model_settings['learning_rate']
 layers = model_settings['layers']
@@ -49,6 +53,7 @@ print(model)
 
 
 def train_model(epoch):
+    i = 0
     hidden_init = model.state0(batch_size)    		
     if options.cuda:
 	    embedding.cuda()
@@ -66,10 +71,17 @@ def train_model(epoch):
         if options.cuda:
             batch = batch.cuda()
         loss = 0
-        for t in range(seq_length):                  
+        for t in range(seq_length):                
             emb = embedding(batch[t])
             hidden, output = model(emb, hidden)
-            loss += loss_fn(output, batch[t+1])
+            loss += loss_fn(output, batch[t + 1])
+            vis.line(Y=[loss], X=[i], update='append', opts=dict(
+                xlabel='Single step (batch)',
+                ylabel='Loss',
+                title='Loss per step'
+                )
+            )
+            i+=1
         
         loss.backward()
 
@@ -104,7 +116,7 @@ def generation(embedding, model, state, n, primer):
     for _ in range(n):
         emb = embedding(next_input)
         hidden, output = model(emb, hidden)
-        values, indices = output.data.topk(1)
+        _, indices = output.data.topk(1)
         out_char = indices[0][0]
         sample.append(out_char)
         next_input = Variable(indices[0])
