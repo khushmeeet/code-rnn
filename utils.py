@@ -87,9 +87,18 @@ def copy_state(state):
     	return Variable(state.data)
 
 
-# def pick_top_n(preds, vocab_size, top_n=5):
-#     p = np.squeeze(preds)
-#     p[np.argsort(p)[:-top_n]] = 0
-#     p = p / np.sum(p)
-#     c = np.random.choice(vocab_size, 1, p=p)[0]
-#     return c
+def save_model(options, model, embedding, e):
+    checkpoint = {
+        'model': model,
+        'embedding': embedding,
+        'epoch': e
+    }
+    if options.paperspace:
+        save_file = f'/artifacts/{options.save_model}_epoch{e}.pt'
+    else:
+        if os.path.exists('./saved_models/'):
+            save_file = f'./saved_models/{options.save_model}_epoch{e}.pt'
+        else:
+            os.mkdir('./saved_models/')
+            save_file = f'./saved_models/{options.save_model}_epoch{e}.pt'
+    torch.save(checkpoint, save_file)

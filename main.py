@@ -146,20 +146,8 @@ if __name__ == '__main__':
                 utils.update_lr(embed_optimizer, lr)
             except KeyboardInterrupt:
                 print('KeyboardInterrupt occured, saving the model')
-                checkpoint = {
-                    'model': model,
-                    'embedding': embedding,
-                    'epoch': e
-                }
-                if options.paperspace:
-                    save_file = f'/artifacts/{options.save_model}_epoch{e}.pt'
-                else:
-                    if os.path.exists('./saved_models/'):
-                        save_file = f'./saved_models/{options.save_model}_epoch{e}.pt'
-                    else:
-                        os.mkdir('./saved_models/')
-                        save_file = f'./saved_models/{options.save_model}_epoch{e}.pt'
-                torch.save(checkpoint, save_file)
+                utils.save_model(options, model, embedding, e)
                 writer.export_scalars_to_json("./all_scalars.json")
                 writer.close()
                 break
+        utils.save_model(options, model, embedding, e)
