@@ -1,6 +1,6 @@
 model_settings = {
     'layers': 1,
-    'rnn_size': 4096,
+    'rnn_size': 2048,
     'embed_size': 64,
     'seq_length': 500,
     'batch_size': 64,
