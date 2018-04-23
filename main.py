@@ -138,7 +138,7 @@ if __name__ == '__main__':
         gen_text = generation(embedding, model, state, options.n, options.primer)
         print(gen_text)
     else:
-        for e in range(options.epochs):
+        for e in range(int(options.epochs)):
             try:
                 train_model(e)
                 lr *= 0.7
