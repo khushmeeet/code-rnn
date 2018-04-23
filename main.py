@@ -2,7 +2,7 @@ import torch
 from torch import optim
 from torch.autograd import Variable
 import torch.nn as nn
-import visdom
+from tensorboardX import SummaryWriter
 import arg_parser
 from mLSTM import Stacked_mLSTM, mLSTM
 from settings import model_settings
@@ -12,8 +12,7 @@ import os
 
 
 options = arg_parser.parser.parse_args()
-vis = visdom.Visdom()
-assert vis.check_connection()
+writer = SummaryWriter()
 
 
 lr = model_settings['learning_rate']
@@ -74,14 +73,12 @@ def train_model(epoch):
         for t in range(seq_length):                
             emb = embedding(batch[t])
             hidden, output = model(emb, hidden)
-            loss += loss_fn(output, batch[t + 1])
-            vis.line(Y=[loss], X=[i], update='append', opts=dict(
-                xlabel='Single step (batch)',
-                ylabel='Loss',
-                title='Loss per step'
-                )
-            )
-            i+=1
+            loss_step = loss_fn(output, batch[t + 1])
+            loss += loss_step
+            writer.add_scalar('loss per step', loss_step, i)
+            i += 1
+        
+        writer.add_scalar('loss per batch ', loss, s)
         
         loss.backward()
 
@@ -163,4 +160,6 @@ if __name__ == '__main__':
                         os.mkdir('./saved_models/')
                         save_file = f'./saved_models/{options.save_model}_epoch{e}.pt'
                 torch.save(checkpoint, save_file)
+                writer.export_scalars_to_json("./all_scalars.json")
+                writer.close()
                 break
