@@ -3,6 +3,7 @@ from torch.autograd import Variable
 import torch
 import math
 import numpy as np
+import settings
 
 
 def tokenize(path):
@@ -88,11 +89,12 @@ def copy_state(state):
 
 
 def save_model(options, model, embedding, e):
-    checkpoint = {
+    temp_checkpoint = {
         'model': model,
         'embedding': embedding,
-        'epoch': e
+        'epoch': e,
     }
+    final_checkpoint = {**temp_checkpoint, **settings.model_settings}
     if options.paperspace:
         save_file = f'/artifacts/{options.save_model}_epoch{e}.pt'
     else:
@@ -101,4 +103,4 @@ def save_model(options, model, embedding, e):
         else:
             os.mkdir('./saved_models/')
             save_file = f'./saved_models/{options.save_model}_epoch{e}.pt'
-    torch.save(checkpoint, save_file)
+    torch.save(final_checkpoint, save_file)

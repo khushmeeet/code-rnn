@@ -37,8 +37,8 @@ else:
     model = Stacked_mLSTM(mLSTM, layers, embed_size, rnn_size, data_size, dropout)
 
 loss_fn = nn.CrossEntropyLoss()
-embed_optimizer = optim.SGD(embedding.parameters(), lr=lr)
-model_optimizer = optim.SGD(model.parameters(), lr=lr)
+embed_optimizer = optim.Adam(embedding.parameters(), lr=lr)
+model_optimizer = optim.Adam(model.parameters(), lr=lr)
 
 n_params = sum([p.nelement() for p in model.parameters()])
 print('Total number of parameters:', n_params)
