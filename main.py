@@ -91,7 +91,7 @@ def train_model(epoch):
         loss_avg = .99*loss_avg + .01*loss.data[0]/seq_length
         
         if s % 10 == 0:
-            print(f'epoch {epoch} | batch {s}/{num_batches} | loss {loss.data[0] / seq_length} | avg loss {loss_avg} | time {time.time() - start}')
+            print(f'epoch: {epoch} | batch: {s}/{num_batches} | step loss: {loss.data[0] / seq_length} | batch loss: {loss.data[0]} | avg loss: {loss_avg} | time: {time.time() - start}s')
 
 
 def generation(embedding, model, state, n, primer):
