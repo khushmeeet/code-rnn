@@ -12,7 +12,7 @@ import os
 
 
 options = arg_parser.parser.parse_args()
-writer = SummaryWriter()
+writer = SummaryWriter(log_dir='./logs')
 
 
 lr = model_settings['learning_rate']
