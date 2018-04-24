@@ -3,7 +3,7 @@ from torch import optim
 from torch.autograd import Variable
 import torch.nn as nn
 from tensorboardX import SummaryWriter
-import arg_parser
+import args
 from mLSTM import Stacked_mLSTM, mLSTM
 from settings import model_settings
 import utils
@@ -11,44 +11,8 @@ import time
 import os
 
 
-options = arg_parser.parser.parse_args()
+options = args.parser.parse_args()
 writer = SummaryWriter(log_dir='./logs')
-
-
-lr = model_settings['learning_rate']
-layers = model_settings['layers']
-batch_size = model_settings['batch_size']
-rnn_size = model_settings['rnn_size']
-embed_size = model_settings['embed_size']
-seq_length = model_settings['seq_length']
-dropout = model_settings['dropout']
-data_size = 256 # ???
-
-train_x = utils.tokenize(options.train_data)
-train_x = utils.batchify(train_x, batch_size)
-num_batches = train_x.size(0)//seq_length
-
-if len(options.load_model) > 0:
-    checkpoint = torch.load(options.load_model)
-    embedding = checkpoint['embed']
-    model = checkpoint['rnn']
-else:
-    embedding = nn.Embedding(256, embed_size)
-    model = Stacked_mLSTM(mLSTM, layers, embed_size, rnn_size, data_size, dropout)
-
-loss_fn = nn.CrossEntropyLoss()
-embed_optimizer = optim.Adam(embedding.parameters(), lr=lr)
-model_optimizer = optim.Adam(model.parameters(), lr=lr)
-
-n_params = sum([p.nelement() for p in model.parameters()])
-print('Total number of parameters:', n_params)
-print('Total number of batches:', num_batches)
-print()
-print('Embedding Summary:')
-print(embedding)
-print()
-print('RNN Summary:')
-print(model)
 
 
 def train_model(epoch):
@@ -97,7 +61,13 @@ def train_model(epoch):
 def generation(embedding, model, state, n, primer):
     sample = [c for c in primer]
     for c in primer:
-        x = torch.ByteTensor(c)
+        x = torch.ByteTensor([1])
+        for l in c.encode():
+            x[0] = l
+        if options.cuda:
+            x = Variable(x.long()).cuda()
+        else:
+            x = Variable(x.long())
         emb = embedding(x)
         hidden, output = model(emb, state)
     
@@ -110,7 +80,7 @@ def generation(embedding, model, state, n, primer):
         next_input.cuda()
 
 
-    for _ in range(n):
+    for _ in range(int(n)):
         emb = embedding(next_input)
         hidden, output = model(emb, hidden)
         _, indices = output.data.topk(1)
@@ -120,7 +90,7 @@ def generation(embedding, model, state, n, primer):
         if options.cuda:
             next_input.cuda()
     
-    return ''.join(sample)
+    return ''.join(chr(i) for i in sample)
 
 
 if __name__ == '__main__':
@@ -138,6 +108,42 @@ if __name__ == '__main__':
         gen_text = generation(embedding, model, state, options.n, options.primer)
         print(gen_text)
     else:
+        lr = model_settings['learning_rate']
+        layers = model_settings['layers']
+        batch_size = model_settings['batch_size']
+        rnn_size = model_settings['rnn_size']
+        embed_size = model_settings['embed_size']
+        seq_length = model_settings['seq_length']
+        dropout = model_settings['dropout']
+        data_size = 256  # ???
+
+        train_x = utils.tokenize(options.train_data)
+        train_x = utils.batchify(train_x, batch_size)
+        num_batches = train_x.size(0) // seq_length
+
+        if len(options.load_model) > 0:
+            checkpoint = torch.load(options.load_model)
+            embedding = checkpoint['embed']
+            model = checkpoint['rnn']
+        else:
+            embedding = nn.Embedding(256, embed_size)
+            model = Stacked_mLSTM(mLSTM, layers, embed_size,
+                                rnn_size, data_size, dropout)
+
+        loss_fn = nn.CrossEntropyLoss()
+        embed_optimizer = optim.Adam(embedding.parameters(), lr=lr)
+        model_optimizer = optim.Adam(model.parameters(), lr=lr)
+
+        n_params = sum([p.nelement() for p in model.parameters()])
+        print('Total number of parameters:', n_params)
+        print('Total number of batches:', num_batches)
+        print()
+        print('Embedding Summary:')
+        print(embedding)
+        print()
+        print('RNN Summary:')
+        print(model)
+
         for e in range(int(options.epochs)):
             try:
                 train_model(e)
